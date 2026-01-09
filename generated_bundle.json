@@ -1,0 +1,17 @@
+{
+    "type": "api",
+    "id": "gen-1767907971",
+    "payload": {
+        "method": "injectedCall",
+        "params": [
+            "signAndBroadcast",
+            "{\"ref_block_num\": 0, \"ref_block_prefix\": 0, \"expiration\": \"2026-02-01T00:00:00\", \"operations\": [[62, {\"fee\": {\"amount\": \"0\", \"asset_id\": \"1.3.0\"}, \"account\": \"YOUR_ACCOUNT_ID\", \"pool\": \"1.19.473\", \"share_amount\": {\"amount\": \"31636798\", \"asset_id\": \"1.3.6520\"}, \"min_a\": {\"amount\": \"48373632\", \"asset_id\": \"1.3.5589\"}, \"min_b\": {\"amount\": \"11068\", \"asset_id\": \"1.3.6139\"}, \"extensions\": []}], [71, {\"fee\": {\"amount\": \"15307\", \"asset_id\": \"1.3.0\"}, \"owner_account\": \"YOUR_ACCOUNT_ID\", \"offer_id\": \"YOUR_CREDIT_OFFER_ID\", \"delta_amount\": {\"amount\": \"48373632\", \"asset_id\": \"1.3.5589\"}, \"fee_rate\": 1000, \"max_duration_seconds\": 2592000, \"min_deal_amount\": \"15000000\", \"enabled\": true, \"auto_disable_time\": \"2026-02-01T16:21:00\", \"acceptable_collateral\": [[\"1.3.0\", {\"base\": {\"amount\": \"10\", \"asset_id\": \"1.3.5589\"}, \"quote\": {\"amount\": \"1000\", \"asset_id\": \"1.3.0\"}}], [\"1.3.5773\", {\"base\": {\"amount\": \"10\", \"asset_id\": \"1.3.5589\"}, \"quote\": {\"amount\": \"10\", \"asset_id\": \"1.3.5773\"}}], [\"1.3.6273\", {\"base\": {\"amount\": \"10\", \"asset_id\": \"1.3.5589\"}, \"quote\": {\"amount\": \"100\", \"asset_id\": \"1.3.6273\"}}]], \"acceptable_borrowers\": [], \"extensions\": []}]], \"extensions\": [], \"signatures\": []}",
+            []
+        ],
+        "appName": "Bitshares Astro UI",
+        "chain": "BTS",
+        "browser": "web browser",
+        "origin": "localhost",
+        "memo": false
+    }
+}

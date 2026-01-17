@@ -1,20 +1,23 @@
 import json
 import time
+import uuid
+from datetime import datetime, timedelta
+from urllib.parse import quote
 from decimal import Decimal
 from websocket import create_connection
 
 # --- CONFIGURATION ---
 NODE_URL = "wss://dex.iobanker.com/ws"
-ACCOUNT_ID = "YOUR_ACCOUNT_ID"
-ACCOUNT_NAME = "YOUR_ACCOUNT_NAME"
-CREDIT_OFFER_ID = "YOUR_CREDIT_OFFER_ID"
+ACCOUNT_ID = "1.2.1795137"
+ACCOUNT_NAME = "bit20-operations-agent-01"
+CREDIT_OFFER_ID = "1.21.533"
 
 # Pool Config: Map your LP Token (1.3.x) to the Pool ID (1.19.x)
 LIQUIDITY_POOLS = {
-    "1.3.6520": { 
-        "pool_id": "1.19.473", 
-        "asset_a_symbol": "XBTSX.USDT",
-        "asset_b_symbol": "XBTSX.XAUT"
+    "1.3.6235": { 
+        "pool_id": "1.19.248", 
+        "asset_a_symbol": "TWENTIX",
+        "asset_b_symbol": "XBTSX.USDC"
     }
 }
 
@@ -186,9 +189,9 @@ class LiquidityManager:
             "enabled": True,
             "auto_disable_time": "2026-02-01T16:21:00",
             "acceptable_collateral": [
-                ["1.3.0", {"base": {"amount": "10", "asset_id": "1.3.5589"}, "quote": {"amount": "1000", "asset_id": "1.3.0"}}],
-                ["1.3.5773", {"base": {"amount": "10", "asset_id": "1.3.5589"}, "quote": {"amount": "10", "asset_id": "1.3.5773"}}],
-                ["1.3.6273", {"base": {"amount": "10", "asset_id": "1.3.5589"}, "quote": {"amount": "100", "asset_id": "1.3.6273"}}]
+                ["1.3.0", {"base": {"amount": "10", "asset_id": asset_id}, "quote": {"amount": "1000", "asset_id": "1.3.0"}}],
+                ["1.3.5773", {"base": {"amount": "10", "asset_id": asset_id}, "quote": {"amount": "10", "asset_id": "1.3.5773"}}],
+                ["1.3.6273", {"base": {"amount": "10", "asset_id": asset_id}, "quote": {"amount": "100", "asset_id": "1.3.6273"}}]
             ],
             "acceptable_borrowers": [],
             "extensions": []
@@ -224,6 +227,59 @@ class LiquidityManager:
         }
         return json.dumps(payload, indent=4)
 
+    def generate_deep_link(self, operations, chain_id="BTS"):
+        """Generates a deep link for the Beet wallet"""
+        # Fetch chain data for transaction parameters
+        props = self._rpc_call("get_dynamic_global_properties", [])
+        if not props:
+            print("[!] Could not fetch dynamic global properties for Deep Link.")
+            return None
+            
+        head_block_number = props["head_block_number"]
+        head_block_id = props["head_block_id"]
+        
+        ref_block_num = head_block_number & 0xFFFF
+        # block_id is hex string. bytes 4-8, little endian.
+        ref_block_prefix = int.from_bytes(bytes.fromhex(head_block_id)[4:8], 'little')
+        
+        # Expiration: now + 2 hours
+        # Bitshares nodes use UTC.
+        # props["time"] format is "2025-..."
+        chain_time = datetime.strptime(props["time"], "%Y-%m-%dT%H:%M:%S")
+        expiration_time = chain_time + timedelta(hours=2)
+        expiration_str = expiration_time.strftime("%Y-%m-%dT%H:%M:%S")
+        
+        tr_object = {
+            "ref_block_num": ref_block_num,
+            "ref_block_prefix": ref_block_prefix,
+            "expiration": expiration_str,
+            "operations": operations,
+            "extensions": [],
+            "signatures": []
+        }
+        
+        request = {
+            "type": "api",
+            "id": str(uuid.uuid4()),
+            "payload": {
+                "method": "injectedCall",
+                "params": [
+                    "signAndBroadcast",
+                    json.dumps(tr_object),
+                    []
+                ],
+                "appName": "Liquidity Engine",
+                "chain": chain_id,
+                "browser": "web browser",
+                "origin": "localhost",
+                "memo": False 
+            }
+        }
+        
+        encoded_payload = quote(json.dumps(request))
+        scheme = "rawbeet://"
+        return f"{scheme}api?chain={chain_id}&request={encoded_payload}"
+
 # --- EXECUTION ---
 
 if __name__ == "__main__":
@@ -231,7 +287,7 @@ if __name__ == "__main__":
     
     try:
         # Configuration for the run
-        target_lp_token = "1.3.6520"
+        target_lp_token = "1.3.6235"
         
         print(f"[*] Connecting to {NODE_URL}...")
         if manager.connect():
@@ -242,10 +298,16 @@ if __name__ == "__main__":
             stats = manager.get_pool_stats(pool_id)
             
             if stats:
-                # XBTSX.USDT is 1.3.5589 (Asset A in this pool)
-                target_asset_id = stats["asset_a_id"] # USDT
+                # In this pool configuration:
+                # Asset A: TWENTIX
+                # Asset B: XBTSX.USDC
                 
-                print(f"[*] Pool assets: A={stats['asset_a_id']} (USDT), B={stats['asset_b_id']} (XAUT)")
+                # We want to use XBTSX.USDC for the credit offer.
+                # Assuming config matches pool asset order A/B or logic handles it.
+                # Here we strictly follow the config map keys.
+                target_asset_id = stats["asset_b_id"] 
+                
+                print(f"[*] Pool assets: A={stats['asset_a_id']} (TWENTIX), B={stats['asset_b_id']} (XBTSX.USDC)")
                 
                 # 1. Fetch User's LP Token Balance
                 user_lp_balance = manager.get_user_balance(ACCOUNT_ID, target_lp_token)
@@ -260,10 +322,10 @@ if __name__ == "__main__":
                         # 3. Calculate expected return
                         withdrawal_calc = manager.calculate_withdrawal_from_shares(stats, shares_to_withdraw)
                         
-                        expected_usdt = withdrawal_calc["expected_a"] # Or min_a if we want to be safe
-                        min_usdt = withdrawal_calc["min_a"]
+                        expected_usdc = withdrawal_calc["expected_b"] 
+                        min_usdc = withdrawal_calc["min_b"]
                         
-                        print(f"[*] Estimated Return: {expected_usdt} USDT (Min: {min_usdt})")
+                        print(f"[*] Estimated Return: {expected_usdc} USDC (Min: {min_usdc})")
                         
                         # 4. Create Operations
                         ops = []
@@ -272,8 +334,8 @@ if __name__ == "__main__":
                         ops.append(manager.create_withdrawal_op(withdrawal_calc, stats))
                         
                         # Op B: Update Credit Offer (Top-up)
-                        # We pledge the minimum guaranteed USDT amount to ensure the op doesn't fail due to slippage
-                        ops.append(manager.create_credit_offer_update_op(min_usdt, target_asset_id))
+                        # We pledge the minimum guaranteed USDC amount (Asset B) to ensure the op doesn't fail due to slippage
+                        ops.append(manager.create_credit_offer_update_op(min_usdc, target_asset_id))
                         
                         # 5. Generate Combined JSON
                         final_json = manager.generate_json(ops)
@@ -283,6 +345,17 @@ if __name__ == "__main__":
                             f.write(final_json)
                         
                         print(f"[+] Success! Atomic transaction bundle saved to {filename}")
+                        
+                        # 6. Generate Deep Link
+                        deep_link = manager.generate_deep_link(ops)
+                        if deep_link:
+                            print(f"\n[+] Deep Link Generated:")
+                            print(deep_link)
+                            
+                            # Optional: Save to file for easy copying
+                            with open("generated_deeplink.txt", "w") as f:
+                                f.write(deep_link)
+                            print(f"[+] Deep link saved to generated_deeplink.txt")
                         
                     except ValueError as e:
                         print(f"[!] Calculation Error: {e}")

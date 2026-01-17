@@ -2,7 +2,7 @@
 
 This project consists of a Python automation script designed to manage DeFi operations on the BitShares blockchain. Specifically, it streamlines the process of withdrawing liquidity from a liquidity pool and immediately utilizing those funds to update (top-up) a credit offer in a single, atomic transaction bundle.
 
-The generated output is a JSON file compatible with the **Beet Wallet**, allowing for secure signing and broadcasting via local application.
+The generated output is a JSON file compatible with the **BitShares Astro UI**, allowing for secure signing and broadcasting via a web wallet.
 
 ## Features
 

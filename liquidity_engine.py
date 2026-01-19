@@ -183,7 +183,7 @@ class LiquidityManager:
                 "amount": str(amount_atoms),
                 "asset_id": asset_id
             },
-            "fee_rate": 1000,
+            "fee_rate": 10000,
             "max_duration_seconds": 2592000,
             "min_deal_amount": "15000000",
             "enabled": True,
@@ -277,7 +277,7 @@ class LiquidityManager:
         }
         
         encoded_payload = quote(json.dumps(request))
-        scheme = "rawbeet://"
+        scheme = "rawbeeteos://"
         return f"{scheme}api?chain={chain_id}&request={encoded_payload}"
 
 # --- EXECUTION ---

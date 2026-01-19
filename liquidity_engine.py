@@ -218,7 +218,7 @@ class LiquidityManager:
                     }),
                     []
                 ],
-                "appName": "Bitshares Astro UI",
+                "appName": "BTWTY Wallet",
                 "chain": "BTS",
                 "browser": "web browser",
                 "origin": "localhost",
@@ -268,7 +268,7 @@ class LiquidityManager:
                     json.dumps(tr_object),
                     []
                 ],
-                "appName": "Liquidity Engine",
+                "appName": "BTWTY Wallet",
                 "chain": chain_id,
                 "browser": "web browser",
                 "origin": "localhost",

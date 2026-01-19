@@ -5,7 +5,7 @@ A Python tool to automate liquidity withdrawals and credit offer updates in a si
 ## Features
 - **Atomic Bundling:** Withdraws liquidity and tops up a credit offer in one transaction.
 - **Deep Link Generation:** Creates `rawbeeteos://` links for easy signing in Beet/BeetEOS wallets.
-- **Astro UI Support:** Outputs `generated_bundle.json` for manual injection if preferred.
+- **Beet Compatibility:** Outputs `generated_bundle.json` for manual injection if preferred.
 
 ## Setup
 

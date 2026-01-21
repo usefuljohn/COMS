@@ -7,17 +7,17 @@ from decimal import Decimal
 from websocket import create_connection
 
 # --- CONFIGURATION ---
-NODE_URL = "wss://dex.iobanker.com/ws"
-ACCOUNT_ID = "1.2.1795137"
-ACCOUNT_NAME = "bit20-operations-agent-01"
-CREDIT_OFFER_ID = "1.21.533"
+NODE_URL = "wss://[YOUR_NODE_URL]"
+ACCOUNT_ID = "[YOUR_ACCOUNT_ID]"
+ACCOUNT_NAME = "[YOUR_ACCOUNT_NAME]"
+CREDIT_OFFER_ID = "[YOUR_CREDIT_OFFER_ID]"
 
 # Pool Config: Map your LP Token (1.3.x) to the Pool ID (1.19.x)
 LIQUIDITY_POOLS = {
-    "1.3.6235": { 
-        "pool_id": "1.19.248", 
-        "asset_a_symbol": "TWENTIX",
-        "asset_b_symbol": "XBTSX.USDC"
+    "[YOUR_LP_TOKEN_ID]": { 
+        "pool_id": "[YOUR_POOL_ID]", 
+        "asset_a_symbol": "[ASSET_A_SYMBOL]",
+        "asset_b_symbol": "[ASSET_B_SYMBOL]"
     }
 }
 
@@ -187,11 +187,10 @@ class LiquidityManager:
             "max_duration_seconds": 2592000,
             "min_deal_amount": "15000000",
             "enabled": True,
-            "auto_disable_time": "2026-02-01T16:21:00",
+            "auto_disable_time": "[YYYY-MM-DDTHH:MM:SS]",
             "acceptable_collateral": [
-                ["1.3.0", {"base": {"amount": "10", "asset_id": asset_id}, "quote": {"amount": "1000", "asset_id": "1.3.0"}}],
-                ["1.3.5773", {"base": {"amount": "10", "asset_id": asset_id}, "quote": {"amount": "10", "asset_id": "1.3.5773"}}],
-                ["1.3.6273", {"base": {"amount": "10", "asset_id": asset_id}, "quote": {"amount": "100", "asset_id": "1.3.6273"}}]
+                ["[COLLATERAL_ASSET_ID_1]", {"base": {"amount": "[AMOUNT]", "asset_id": asset_id}, "quote": {"amount": "[AMOUNT]", "asset_id": "[COLLATERAL_ASSET_ID_1]"}}],
+                ["[COLLATERAL_ASSET_ID_2]", {"base": {"amount": "[AMOUNT]", "asset_id": asset_id}, "quote": {"amount": "[AMOUNT]", "asset_id": "[COLLATERAL_ASSET_ID_2]"}}]
             ],
             "acceptable_borrowers": [],
             "extensions": []
@@ -211,14 +210,14 @@ class LiquidityManager:
                     json.dumps({
                         "ref_block_num": 0,
                         "ref_block_prefix": 0,
-                        "expiration": "2026-02-01T00:00:00",
+                        "expiration": "[YYYY-MM-DDTHH:MM:SS]",
                         "operations": operations,
                         "extensions": [],
                         "signatures": []
                     }),
                     []
                 ],
-                "appName": "BTWTY Wallet",
+                "appName": "[YOUR_APP_NAME]",
                 "chain": "BTS",
                 "browser": "web browser",
                 "origin": "localhost",
@@ -268,7 +267,7 @@ class LiquidityManager:
                     json.dumps(tr_object),
                     []
                 ],
-                "appName": "BTWTY Wallet",
+                "appName": "[YOUR_APP_NAME]",
                 "chain": chain_id,
                 "browser": "web browser",
                 "origin": "localhost",
@@ -287,7 +286,7 @@ if __name__ == "__main__":
     
     try:
         # Configuration for the run
-        target_lp_token = "1.3.6235"
+        target_lp_token = "[YOUR_LP_TOKEN_ID]"
         
         print(f"[*] Connecting to {NODE_URL}...")
         if manager.connect():
@@ -299,15 +298,15 @@ if __name__ == "__main__":
             
             if stats:
                 # In this pool configuration:
-                # Asset A: TWENTIX
-                # Asset B: XBTSX.USDC
+                # Asset A: [ASSET_A_SYMBOL]
+                # Asset B: [ASSET_B_SYMBOL]
                 
-                # We want to use XBTSX.USDC for the credit offer.
+                # We want to use [ASSET_B_SYMBOL] for the credit offer.
                 # Assuming config matches pool asset order A/B or logic handles it.
                 # Here we strictly follow the config map keys.
                 target_asset_id = stats["asset_b_id"] 
                 
-                print(f"[*] Pool assets: A={stats['asset_a_id']} (TWENTIX), B={stats['asset_b_id']} (XBTSX.USDC)")
+                print(f"[*] Pool assets: A={stats['asset_a_id']} ([ASSET_A_SYMBOL]), B={stats['asset_b_id']} ([ASSET_B_SYMBOL])")
                 
                 # 1. Fetch User's LP Token Balance
                 user_lp_balance = manager.get_user_balance(ACCOUNT_ID, target_lp_token)
@@ -322,10 +321,10 @@ if __name__ == "__main__":
                         # 3. Calculate expected return
                         withdrawal_calc = manager.calculate_withdrawal_from_shares(stats, shares_to_withdraw)
                         
-                        expected_usdc = withdrawal_calc["expected_b"] 
-                        min_usdc = withdrawal_calc["min_b"]
+                        expected_asset_b = withdrawal_calc["expected_b"] 
+                        min_asset_b = withdrawal_calc["min_b"]
                         
-                        print(f"[*] Estimated Return: {expected_usdc} USDC (Min: {min_usdc})")
+                        print(f"[*] Estimated Return: {expected_asset_b} [ASSET_B_SYMBOL] (Min: {min_asset_b})")
                         
                         # 4. Create Operations
                         ops = []
@@ -334,8 +333,8 @@ if __name__ == "__main__":
                         ops.append(manager.create_withdrawal_op(withdrawal_calc, stats))
                         
                         # Op B: Update Credit Offer (Top-up)
-                        # We pledge the minimum guaranteed USDC amount (Asset B) to ensure the op doesn't fail due to slippage
-                        ops.append(manager.create_credit_offer_update_op(min_usdc, target_asset_id))
+                        # We pledge the minimum guaranteed amount (Asset B) to ensure the op doesn't fail due to slippage
+                        ops.append(manager.create_credit_offer_update_op(min_asset_b, target_asset_id))
                         
                         # 5. Generate Combined JSON
                         final_json = manager.generate_json(ops)
